@@ -1,0 +1,11 @@
+use crate::utils;
+
+pub fn day%%DAY%%() -> std::io::Result<()> {
+    println!("Running Day %%DAY%% - a");
+
+    let lines = utils::readDay(%%DAY%%)?;
+
+    println!("Running Day %%DAY%% - b");
+
+    Ok(())
+}
