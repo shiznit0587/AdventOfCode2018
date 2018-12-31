@@ -2,6 +2,8 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::io;
 
+// This class was just me going through the Chapter 2 example in the Rust Programming Language book
+// https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html
 pub fn play() {
     println!("Guess the number!");
 
