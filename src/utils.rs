@@ -14,10 +14,5 @@ pub fn readDay(day: i32) -> std::io::Result<Vec<String>> {
 }
 
 pub fn tryParse_i32(string: &str) -> i32 {
-    let parsed: i32 = match string.trim().parse() {
-        Ok(num) => num,
-        Err(_) => 0,
-    };
-
-    parsed
+    string.trim().parse().unwrap_or_default()
 }
