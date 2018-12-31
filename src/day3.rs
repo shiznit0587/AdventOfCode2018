@@ -1,8 +1,7 @@
 extern crate regex;
 
-use regex::Regex;
-
 use crate::utils;
+use regex::Regex;
 
 pub fn day3() -> std::io::Result<()> {
     println!("Running Day 3 - a");
@@ -36,7 +35,7 @@ pub fn day3() -> std::io::Result<()> {
         }
     }
 
-    let count = cloth.iter().filter(|&x| *x > 1).fold(0, |acc, _| acc + 1);
+    let count = cloth.iter().filter(|&x| *x > 1).count();
 
     println!("Count = {}", count);
 
@@ -67,6 +66,7 @@ struct Claim {
     h: i32,
 }
 
+// Unused, kept for example
 impl std::fmt::Display for Claim {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
