@@ -5,41 +5,43 @@ pub fn day5() -> std::io::Result<()> {
 
     let lines = utils::readDay(5)?;
 
-    // This day has only one line.
-    // But, it involves a lot of string manipulation
-    // I should break it down into a vector or ints, and remove pairs that are 26 apart
-    // I should continuously traverse the entire list doing this until it can't be done anymore
+    let mut polymer = lines.get(0).unwrap().to_owned();
+    // let mut polymer = "dabAcCaCBAcCcaDA".to_owned();
 
-    let line = lines.get(0).unwrap();
-    // let line = "dabAcCaCBAcCcaDA";
+    // Optimization: All 'improved' polymers will still have _at least_ the same reactions
+    // as the unimproved polymer. So, assign back, and let the improved polymers not
+    // duplicate the same effort.
+    polymer = reactPolymer(&polymer);
 
-    let mut _input = line.chars().map(|c| c as u8).collect::<Vec<u8>>();
+    println!("Remaining Polymer Units = {}", polymer.len());
 
-    // println!(
-    // "input = {}",
-    // _input.iter().map(|c| *c as char).collect::<String>()
-    // );
+    println!("Running Day 5 - b");
 
-    let mut idx: usize;
+    let shortestPolymerLength = (0..26)
+        .map(|i| (((i as u8) + 65) as char, ((i as u8) + 97) as char))
+        .map(|t| improvePolymer(&polymer, t))
+        .map(|p| reactPolymer(&p))
+        .map(|p| p.len())
+        .min_by(|a, b| a.cmp(&b))
+        .unwrap();
+
+    println!("Shortest Polymer Length = {}", shortestPolymerLength);
+
+    Ok(())
+}
+
+fn reactPolymer(polymer: &String) -> String {
+    let mut polymer = polymer.chars().map(|c| c as u8).collect::<Vec<u8>>();
+
+    let mut idx;
     let mut removalMade = true;
     while removalMade {
         removalMade = false;
         idx = 0;
-        while idx < _input.len() - 1 {
-            if (_input[idx] as i32 - _input[idx + 1] as i32).abs() == 32 {
-                // println!(
-                // "Removing {} and {} at {}",
-                // _input[idx] as char,
-                // _input[idx + 1] as char,
-                // idx
-                // );
-                _input.remove(idx);
-                _input.remove(idx);
-
-                // println!(
-                // "input = {}",
-                // _input.iter().map(|c| *c as char).collect::<String>()
-                // );
+        while idx < polymer.len() - 1 {
+            if (polymer[idx] as i32 - polymer[idx + 1] as i32).abs() == 32 {
+                polymer.remove(idx);
+                polymer.remove(idx);
                 removalMade = true;
             } else {
                 idx += 1;
@@ -47,14 +49,12 @@ pub fn day5() -> std::io::Result<()> {
         }
     }
 
-    // println!(
-    // "input = {}",
-    // _input.iter().map(|c| *c as char).collect::<String>()
-    // );
+    polymer.iter().map(|c| *c as char).collect::<String>()
+}
 
-    println!("Remaining Polymer Units = {}", _input.len());
-
-    println!("Running Day 5 - b");
-
-    Ok(())
+fn improvePolymer(polymer: &String, unitType: (char, char)) -> String {
+    polymer
+        .chars()
+        .filter(|c| *c != unitType.0 && *c != unitType.1)
+        .collect::<String>()
 }
