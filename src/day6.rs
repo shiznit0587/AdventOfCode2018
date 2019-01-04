@@ -15,6 +15,7 @@ pub fn day6() -> std::io::Result<()> {
         .collect_vec();
 
     let mut grid: HashMap<Point, usize> = HashMap::new();
+    let mut totals: HashMap<Point, i32> = HashMap::new();
 
     let xBounds = (
         coords.iter().map(|c| c.0).min().unwrap(),
@@ -35,6 +36,9 @@ pub fn day6() -> std::io::Result<()> {
                 .enumerate()
                 .map(|(i, c)| ((i, *c), calcManhattan(c, &coord)))
                 .collect::<Vec<((usize, Point), i32)>>();
+
+            let total = manhattans.iter().map(|(_, i)| *i).sum();
+            totals.insert(coord, total);
 
             let min = manhattans.iter().map(|i| i.1).min().unwrap();
 
@@ -68,6 +72,10 @@ pub fn day6() -> std::io::Result<()> {
     println!("Largest Area = {}", max);
 
     println!("Running Day 6 - b");
+
+    let regions = totals.values().filter(|&t| *t < 10000).count();
+
+    println!("Region Size = {}", regions);
 
     Ok(())
 }
