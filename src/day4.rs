@@ -3,7 +3,6 @@ extern crate regex;
 use crate::utils;
 use regex::Regex;
 use std::collections::HashMap;
-use std::ops::Add;
 
 pub fn day4() -> std::io::Result<()> {
     println!("Running Day 4 - a");
@@ -90,7 +89,7 @@ impl Guard {
     }
 
     fn finalize(&mut self) {
-        self.minsAsleep = self.mins.iter().fold(0, Add::add);
+        self.minsAsleep = self.mins.iter().sum();
         for (i, val) in self.mins.iter().enumerate() {
             if *val > self.mostInMin {
                 self.mostInMin = *val;
