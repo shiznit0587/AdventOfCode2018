@@ -22,7 +22,7 @@ pub fn day5() -> std::io::Result<()> {
         .map(|t| improvePolymer(&polymer, t))
         .map(|p| reactPolymer(&p))
         .map(|p| p.len())
-        .min_by(|a, b| a.cmp(&b))
+        .min()
         .unwrap();
 
     println!("Shortest Polymer Length = {}", shortestPolymerLength);

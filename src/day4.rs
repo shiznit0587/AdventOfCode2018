@@ -3,6 +3,7 @@ extern crate regex;
 use crate::utils;
 use regex::Regex;
 use std::collections::HashMap;
+use std::ops::Add;
 
 pub fn day4() -> std::io::Result<()> {
     println!("Running Day 4 - a");
@@ -36,10 +37,7 @@ pub fn day4() -> std::io::Result<()> {
 
     guards.values_mut().for_each(Guard::finalize);
 
-    let sleepiestGuard = guards
-        .values()
-        .max_by(|g1, g2| g1.minsAsleep.cmp(&g2.minsAsleep))
-        .unwrap();
+    let sleepiestGuard = guards.values().max_by_key(|g| g.minsAsleep).unwrap();
 
     println!(
         "Guard # {} :: Mins Asleep = {}, Min Most Asleep = {}, Times Asleep in Min = {}, Checksum = {}",
@@ -52,10 +50,7 @@ pub fn day4() -> std::io::Result<()> {
 
     println!("Running Day 4 - b");
 
-    let predictableGuard = guards
-        .values()
-        .max_by(|g1, g2| g1.mostInMin.cmp(&g2.mostInMin))
-        .unwrap();
+    let predictableGuard = guards.values().max_by_key(|g| g.mostInMin).unwrap();
 
     println!(
         "Guard # {} :: Mins Asleep = {}, Min Most Asleep = {}, Times Asleep in Min = {}, Checksum = {}",
@@ -95,7 +90,7 @@ impl Guard {
     }
 
     fn finalize(&mut self) {
-        self.minsAsleep = self.mins.iter().fold(0, |acc, x| acc + x);
+        self.minsAsleep = self.mins.iter().fold(0, Add::add);
         for (i, val) in self.mins.iter().enumerate() {
             if *val > self.mostInMin {
                 self.mostInMin = *val;
