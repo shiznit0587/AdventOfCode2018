@@ -4,7 +4,12 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::fmt;
 
+// const NUM_NODES: usize = 6;
+// const NUM_WORKERS: usize = 2;
+// const MIN_TIME: u32 = 0;
 const NUM_NODES: usize = 26;
+const NUM_WORKERS: usize = 5;
+const MIN_TIME: u32 = 60;
 
 type Edge = (usize, usize);
 
@@ -21,18 +26,31 @@ pub fn day7() -> std::io::Result<()> {
 
     let mut day7 = Day7::new(&edges);
 
-    let visitOrder: [usize; NUM_NODES] = day7.solve_a();
+    let order = day7.solve_a();
 
-    let order = visitOrder
-        .iter()
-        .map(|&i| day7.nodes[i].get_name())
-        .collect::<String>();
-
-    println!("Instruction Order = {}", order);
+    println!(
+        "Instruction Order = {}",
+        make_instruction_string(&day7, &order)
+    );
 
     println!("Running Day 7 - b");
 
+    let order = day7.solve_b();
+
+    println!(
+        "Instruction Order = {}, Duration = {}",
+        make_instruction_string(&day7, &order.0),
+        order.1
+    );
+
     Ok(())
+}
+
+fn make_instruction_string(day7: &Day7, order: &[usize; NUM_NODES]) -> String {
+    order
+        .iter()
+        .map(|&i| day7.nodes[i].get_name())
+        .collect::<String>()
 }
 
 struct Day7 {
@@ -70,6 +88,75 @@ impl Day7 {
         }
 
         visitOrder
+    }
+
+    fn solve_b(&mut self) -> ([usize; NUM_NODES], u32) {
+        let mut workers: Vec<Worker> = Vec::with_capacity(NUM_WORKERS);
+        for _ in 0..NUM_WORKERS {
+            workers.push(Worker::new());
+        }
+
+        let mut visit_order: [usize; NUM_NODES] = [0; NUM_NODES];
+        let mut visit_count = 0;
+        let mut total_ticks = 0;
+        let mut iter = self.iter();
+
+        while visit_count < NUM_NODES {
+            // Tick all active workers down by the min remaining duration of a single worker (skip time forward)
+            let mut active_workers = workers
+                .iter_mut()
+                .filter(|w| w.active())
+                .collect::<Vec<&mut Worker>>();
+
+            if !active_workers.is_empty() {
+                // Determine ticks until the next active worker is completed.
+                let ticks = active_workers.iter().map(|w| w.ticks).min().unwrap();
+
+                // Tick all active workers down until at least one is completed.
+                active_workers.iter_mut().for_each(|w| w.ticks -= ticks);
+
+                total_ticks += ticks;
+            }
+
+            // Evaluate completed workers.
+            let mut sorted_completed_workers = workers
+                .iter_mut()
+                .filter(|w| w.completed())
+                .collect::<Vec<&mut Worker>>();
+
+            // Evaluate them in alphabetical order.
+            sorted_completed_workers.sort_by_key(|w| w.nodeId.unwrap());
+
+            for worker in sorted_completed_workers {
+                let nodeId = worker.nodeId.unwrap();
+                let node = &self.nodes[nodeId];
+
+                iter.visit(node);
+                visit_order[visit_count] = nodeId;
+                visit_count += 1;
+
+                // println!("Finished visiting {:?}", node);
+
+                worker.nodeId = None;
+            }
+
+            // Attempt to begin work with inactive workers.
+            let mut free_workers = workers
+                .iter_mut()
+                .filter(|w| !w.active())
+                .collect::<Vec<&mut Worker>>();
+
+            free_workers
+                .iter_mut()
+                .by_ref()
+                .zip(iter.by_ref())
+                .for_each(|(w, n)| {
+                    w.nodeId = Some(n.id);
+                    w.ticks = MIN_TIME + n.id as u32 + 1;
+                });
+        }
+
+        (visit_order, total_ticks)
     }
 
     fn iter(&self) -> Day7Iterator<'_> {
@@ -128,7 +215,7 @@ impl<'a> Iterator for Day7Iterator<'a> {
         //     Some(node) => {
         //         println!("Iterator :: next={:?}", node);
         //     }
-        //     _ => {}
+        //     None => {}
         // }
         next
     }
@@ -174,5 +261,30 @@ impl Ord for Node {
 impl PartialOrd for Node {
     fn partial_cmp(&self, other: &Node) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+struct Worker {
+    nodeId: Option<usize>,
+    ticks: u32,
+}
+
+impl Worker {
+    fn new() -> Worker {
+        Worker {
+            nodeId: None,
+            ticks: 0,
+        }
+    }
+
+    fn active(&self) -> bool {
+        match self.nodeId {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    fn completed(&self) -> bool {
+        self.active() && self.ticks == 0
     }
 }
