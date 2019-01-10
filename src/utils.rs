@@ -1,4 +1,5 @@
 use std::io::BufRead;
+use std::str::FromStr;
 
 pub fn readDay(day: i32) -> std::io::Result<Vec<String>> {
     let f = std::fs::File::open(format!("inputs/Day{}.txt", day))?;
@@ -14,6 +15,13 @@ pub fn readDay(day: i32) -> std::io::Result<Vec<String>> {
 }
 
 pub fn tryParse_i32(string: &str) -> i32 {
+    string.trim().parse().unwrap_or_default()
+}
+
+pub fn parse<T>(string: &str) -> T
+where
+    T: FromStr + Default,
+{
     string.trim().parse().unwrap_or_default()
 }
 
