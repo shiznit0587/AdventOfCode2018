@@ -4,7 +4,7 @@ use std::collections::HashSet;
 pub fn day1() -> std::io::Result<()> {
     println!("Running Day 1 - a");
 
-    let lines = utils::readDay(1)?;
+    let lines = utils::read_day(1)?;
 
     let mut day1a: i32 = 0;
 
@@ -24,7 +24,7 @@ pub fn day1() -> std::io::Result<()> {
             };
 
             let val = &line[1..];
-            let val: i32 = utils::tryParse_i32(val);
+            let val = utils::parse::<i32>(val);
 
             day1a += mult * val;
 

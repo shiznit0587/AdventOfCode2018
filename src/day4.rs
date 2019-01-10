@@ -7,7 +7,7 @@ use std::collections::HashMap;
 pub fn day4() -> std::io::Result<()> {
     println!("Running Day 4 - a");
 
-    let mut lines = utils::readDay(4)?;
+    let mut lines = utils::read_day(4)?;
     lines.sort(); // ... seriously? wow, that was easy.
 
     let timeRex = Regex::new(r"\d+:(?P<m>\d+)").unwrap();
@@ -20,14 +20,14 @@ pub fn day4() -> std::io::Result<()> {
 
     for line in lines.iter() {
         if line.contains("falls asleep") {
-            let minute = utils::tryParse_i32(&timeRex.captures(line).unwrap()["m"]);
+            let minute = utils::parse(&timeRex.captures(line).unwrap()["m"]);
             asleep = Option::Some(minute);
         } else if line.contains("wakes up") {
-            let minute = utils::tryParse_i32(&timeRex.captures(line).unwrap()["m"]);
+            let minute = utils::parse(&timeRex.captures(line).unwrap()["m"]);
             let guard = guards.get_mut(&guardOnDuty.unwrap()).unwrap();
             guard.sleep(asleep.unwrap(), minute);
         } else {
-            let guardId = utils::tryParse_i32(&beginRex.captures(line).unwrap()["g"]);
+            let guardId = utils::parse(&beginRex.captures(line).unwrap()["g"]);
             let mut guard = guards.entry(guardId).or_insert(Guard::new());
             guard.id = guardId;
             guardOnDuty = Option::Some(guard.id);

@@ -18,7 +18,7 @@ pub fn day7() -> std::io::Result<()> {
 
     let rex = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
-    let edges: Vec<Edge> = utils::readDay(7)?
+    let edges: Vec<Edge> = utils::read_day(7)?
         .iter()
         .map(|l| rex.captures(l).unwrap())
         .map(|c| (Node::get_id_from_name(&c[1]), Node::get_id_from_name(&c[2])))
@@ -242,7 +242,7 @@ impl Node {
     }
 
     fn get_id_from_name(name: &str) -> usize {
-        (utils::tryParse_char(name) - 65) as usize
+        (utils::parse::<char>(name) as u8 - 65) as usize
     }
 }
 

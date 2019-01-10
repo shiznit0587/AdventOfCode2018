@@ -8,10 +8,10 @@ pub fn day6() -> std::io::Result<()> {
 
     let rex = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
 
-    let coords = utils::readDay(6)?
+    let coords = utils::read_day(6)?
         .iter()
         .map(|l| rex.captures(l).unwrap())
-        .map(|c| (utils::tryParse_i32(&c[1]), utils::tryParse_i32(&c[2])))
+        .map(|c| (utils::parse(&c[1]), utils::parse(&c[2])))
         .collect_vec();
 
     let mut grid: HashMap<Point, usize> = HashMap::new();

@@ -3,7 +3,7 @@ use crate::utils;
 pub fn day8() -> std::io::Result<()> {
     println!("Running Day 8 - a");
 
-    let code = utils::readDay(8)?
+    let code = utils::read_day(8)?
         .first()
         .unwrap()
         .split(" ")

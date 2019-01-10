@@ -6,7 +6,7 @@ use regex::Regex;
 pub fn day3() -> std::io::Result<()> {
     println!("Running Day 3 - a");
 
-    let lines = utils::readDay(3)?;
+    let lines = utils::read_day(3)?;
 
     // Rawr
     let rex = Regex::new(r"^#(\d+)\s@\s(\d+),(\d+):\s(\d+)x(\d+)$").unwrap();
@@ -17,11 +17,11 @@ pub fn day3() -> std::io::Result<()> {
         let cap = rex.captures(line).unwrap();
 
         claims.push(Claim {
-            id: utils::tryParse_i32(&cap[1]),
-            x: utils::tryParse_i32(&cap[2]),
-            y: utils::tryParse_i32(&cap[3]),
-            w: utils::tryParse_i32(&cap[4]),
-            h: utils::tryParse_i32(&cap[5]),
+            id: utils::parse(&cap[1]),
+            x: utils::parse(&cap[2]),
+            y: utils::parse(&cap[3]),
+            w: utils::parse(&cap[4]),
+            h: utils::parse(&cap[5]),
         });
     }
 

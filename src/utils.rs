@@ -1,7 +1,7 @@
 use std::io::BufRead;
 use std::str::FromStr;
 
-pub fn readDay(day: i32) -> std::io::Result<Vec<String>> {
+pub fn read_day(day: i32) -> std::io::Result<Vec<String>> {
     let f = std::fs::File::open(format!("inputs/Day{}.txt", day))?;
     let f = std::io::BufReader::new(f);
 
@@ -14,19 +14,11 @@ pub fn readDay(day: i32) -> std::io::Result<Vec<String>> {
     Ok(lines)
 }
 
-pub fn tryParse_i32(string: &str) -> i32 {
-    string.trim().parse().unwrap_or_default()
-}
-
 pub fn parse<T>(string: &str) -> T
 where
     T: FromStr + Default,
 {
     string.trim().parse().unwrap_or_default()
-}
-
-pub fn tryParse_char(string: &str) -> u8 {
-    string.trim().chars().next().unwrap_or_default() as u8
 }
 
 pub fn set_bit(bits: &mut u32, bit: usize) {
