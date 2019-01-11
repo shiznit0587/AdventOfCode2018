@@ -3,10 +3,8 @@ extern crate regex;
 use crate::utils;
 use regex::Regex;
 
-pub fn day3() -> std::io::Result<()> {
+pub fn day3(lines: &mut Vec<String>) {
     println!("Running Day 3 - a");
-
-    let lines = utils::read_day(3)?;
 
     // Rawr
     let rex = Regex::new(r"^#(\d+)\s@\s(\d+),(\d+):\s(\d+)x(\d+)$").unwrap();
@@ -54,8 +52,6 @@ pub fn day3() -> std::io::Result<()> {
             println!("Non-Overlapping Claim ID = {}", claim.id);
         }
     }
-
-    Ok(())
 }
 
 struct Claim {

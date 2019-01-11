@@ -1,10 +1,8 @@
 use crate::utils;
 use std::collections::HashSet;
 
-pub fn day1() -> std::io::Result<()> {
+pub fn day1(lines: &mut Vec<String>) {
     println!("Running Day 1 - a");
-
-    let lines = utils::read_day(1)?;
 
     let mut day1a: i32 = 0;
 
@@ -20,7 +18,7 @@ pub fn day1() -> std::io::Result<()> {
             let mult = match sign {
                 "-" => -1,
                 "+" => 1,
-                _ => return Ok(()),
+                _ => return,
             };
 
             let val = &line[1..];
@@ -42,6 +40,4 @@ pub fn day1() -> std::io::Result<()> {
 
     println!("Running Day 1 - b");
     println!("First Frequency Reached Twice = {}", day1b);
-
-    Ok(())
 }

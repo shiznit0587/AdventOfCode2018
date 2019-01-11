@@ -4,10 +4,9 @@ use crate::utils;
 use regex::Regex;
 use std::collections::HashMap;
 
-pub fn day4() -> std::io::Result<()> {
+pub fn day4(lines: &mut Vec<String>) {
     println!("Running Day 4 - a");
 
-    let mut lines = utils::read_day(4)?;
     lines.sort(); // ... seriously? wow, that was easy.
 
     let timeRex = Regex::new(r"\d+:(?P<m>\d+)").unwrap();
@@ -59,8 +58,6 @@ pub fn day4() -> std::io::Result<()> {
         predictableGuard.mostInMin,
         predictableGuard.id * predictableGuard.minMost
     );
-
-    Ok(())
 }
 
 struct Guard {

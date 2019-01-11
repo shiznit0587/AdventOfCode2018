@@ -1,9 +1,5 @@
-use crate::utils;
-
-pub fn day5() -> std::io::Result<()> {
+pub fn day5(lines: &mut Vec<String>) {
     println!("Running Day 5 - a");
-
-    let lines = utils::read_day(5)?;
 
     let mut polymer = lines.get(0).unwrap().to_owned();
     // let mut polymer = "dabAcCaCBAcCcaDA".to_owned();
@@ -26,8 +22,6 @@ pub fn day5() -> std::io::Result<()> {
         .unwrap();
 
     println!("Shortest Polymer Length = {}", shortestPolymerLength);
-
-    Ok(())
 }
 
 fn reactPolymer(polymer: &String) -> String {

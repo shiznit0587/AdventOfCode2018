@@ -4,12 +4,12 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-pub fn day6() -> std::io::Result<()> {
+pub fn day6(lines: &mut Vec<String>) {
     println!("Running Day 6 - a");
 
     let rex = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
 
-    let coords = utils::read_day(6)?
+    let coords = lines
         .iter()
         .map(|l| rex.captures(l).unwrap())
         .map(|c| (utils::parse(&c[1]), utils::parse(&c[2])))
@@ -86,8 +86,6 @@ pub fn day6() -> std::io::Result<()> {
     let regions = totals.values().filter(|&t| *t < 10000).count();
 
     println!("Region Size = {}", regions);
-
-    Ok(())
 }
 
 fn calcManhattan(a: &Point, b: &Point) -> i32 {

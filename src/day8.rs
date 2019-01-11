@@ -1,9 +1,9 @@
 use crate::utils;
 
-pub fn day8() -> std::io::Result<()> {
+pub fn day8(lines: &mut Vec<String>) {
     println!("Running Day 8 - a");
 
-    let code = utils::read_day(8)?
+    let code = lines
         .first()
         .unwrap()
         .split(" ")
@@ -15,8 +15,6 @@ pub fn day8() -> std::io::Result<()> {
     println!("License = {}", license);
 
     println!("Running Day 8 - b");
-
-    Ok(())
 }
 
 fn calc_license(code: &Vec<u32>) -> u32 {

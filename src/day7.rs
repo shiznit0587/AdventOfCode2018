@@ -13,12 +13,12 @@ const MIN_TIME: u32 = 60;
 
 type Edge = (usize, usize);
 
-pub fn day7() -> std::io::Result<()> {
+pub fn day7(lines: &mut Vec<String>) {
     println!("Running Day 7 - a");
 
     let rex = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
-    let edges: Vec<Edge> = utils::read_day(7)?
+    let edges: Vec<Edge> = lines
         .iter()
         .map(|l| rex.captures(l).unwrap())
         .map(|c| (Node::get_id_from_name(&c[1]), Node::get_id_from_name(&c[2])))
@@ -38,8 +38,6 @@ pub fn day7() -> std::io::Result<()> {
     let order = day7.solve_b();
 
     println!("Instruction Duration = {}", order);
-
-    Ok(())
 }
 
 fn make_instruction_string(day7: &Day7, order: &[usize; NUM_NODES]) -> String {

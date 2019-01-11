@@ -1,9 +1,5 @@
-use crate::utils;
-
-pub fn day2() -> std::io::Result<()> {
+pub fn day2(lines: &mut Vec<String>) {
     println!("Running Day 2 - a");
-
-    let lines = utils::read_day(2)?;
 
     let mut twoCount = 0;
     let mut threeCount = 0;
@@ -68,6 +64,4 @@ pub fn day2() -> std::io::Result<()> {
             }
         }
     }
-
-    Ok(())
 }
