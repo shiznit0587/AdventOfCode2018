@@ -34,18 +34,16 @@ fn reactPolymer(polymer: &String) -> String {
     let mut polymer = polymer.chars().map(|c| c as u8).collect::<Vec<u8>>();
 
     let mut idx;
-    let mut removalMade = true;
-    while removalMade {
-        removalMade = false;
-        idx = 0;
-        while idx < polymer.len() - 1 {
-            if (polymer[idx] as i32 - polymer[idx + 1] as i32).abs() == 32 {
-                polymer.remove(idx);
-                polymer.remove(idx);
-                removalMade = true;
-            } else {
-                idx += 1;
+    idx = 0;
+    while idx < polymer.len() - 1 {
+        if (polymer[idx] as i32 - polymer[idx + 1] as i32).abs() == 32 {
+            polymer.remove(idx);
+            polymer.remove(idx);
+            if idx > 0 {
+                idx -= 1;
             }
+        } else {
+            idx += 1;
         }
     }
 

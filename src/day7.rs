@@ -37,11 +37,7 @@ pub fn day7() -> std::io::Result<()> {
 
     let order = day7.solve_b();
 
-    println!(
-        "Instruction Order = {}, Duration = {}",
-        make_instruction_string(&day7, &order.0),
-        order.1
-    );
+    println!("Instruction Duration = {}", order);
 
     Ok(())
 }
@@ -90,13 +86,12 @@ impl Day7 {
         visitOrder
     }
 
-    fn solve_b(&mut self) -> ([usize; NUM_NODES], u32) {
+    fn solve_b(&mut self) -> u32 {
         let mut workers: Vec<Worker> = Vec::with_capacity(NUM_WORKERS);
         for _ in 0..NUM_WORKERS {
             workers.push(Worker::new());
         }
 
-        let mut visit_order: [usize; NUM_NODES] = [0; NUM_NODES];
         let mut visit_count = 0;
         let mut total_ticks = 0;
         let mut iter = self.iter();
@@ -129,7 +124,6 @@ impl Day7 {
                 let node = &self.nodes[nodeId];
 
                 iter.visit(node);
-                visit_order[visit_count] = nodeId;
                 visit_count += 1;
 
                 // println!("Finished visiting {:?}", node);
@@ -152,7 +146,7 @@ impl Day7 {
                 });
         }
 
-        (visit_order, total_ticks)
+        total_ticks
     }
 
     fn iter(&self) -> Day7Iterator<'_> {
