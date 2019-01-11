@@ -119,15 +119,12 @@ impl Day7 {
             }
 
             // Evaluate completed workers.
-            let mut sorted_completed_workers = workers
+            let completed_workers = workers
                 .iter_mut()
                 .filter(|w| w.completed())
                 .collect::<Vec<&mut Worker>>();
 
-            // Evaluate them in alphabetical order.
-            sorted_completed_workers.sort_by_key(|w| w.nodeId.unwrap());
-
-            for worker in sorted_completed_workers {
+            for worker in completed_workers {
                 let nodeId = worker.nodeId.unwrap();
                 let node = &self.nodes[nodeId];
 
@@ -148,7 +145,6 @@ impl Day7 {
 
             free_workers
                 .iter_mut()
-                .by_ref()
                 .zip(iter.by_ref())
                 .for_each(|(w, n)| {
                     w.nodeId = Some(n.id);
@@ -278,10 +274,7 @@ impl Worker {
     }
 
     fn active(&self) -> bool {
-        match self.nodeId {
-            Some(_) => true,
-            None => false,
-        }
+        self.nodeId.is_some()
     }
 
     fn completed(&self) -> bool {
