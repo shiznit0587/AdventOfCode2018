@@ -2,6 +2,7 @@ use crate::utils;
 use itertools::Itertools;
 use regex::Regex;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub fn day6() -> std::io::Result<()> {
     println!("Running Day 6 - a");
@@ -57,10 +58,19 @@ pub fn day6() -> std::io::Result<()> {
     }
 
     // Exclude coords with infinite areas.
+    let mut excludes: HashSet<usize> = HashSet::new();
+    for x in xBounds.0..xBounds.1 + 1 {
+        exclude((x, yBounds.0), &grid, &mut excludes);
+        exclude((x, yBounds.1), &grid, &mut excludes);
+    }
+    for y in yBounds.0..yBounds.1 + 1 {
+        exclude((xBounds.0, y), &grid, &mut excludes);
+        exclude((xBounds.1, y), &grid, &mut excludes);
+    }
+
     grid = grid
         .into_iter()
-        .filter(|(_, i)| xBounds.0 < coords[*i].0 && coords[*i].0 < xBounds.1)
-        .filter(|(_, i)| yBounds.0 < coords[*i].1 && coords[*i].1 < yBounds.1)
+        .filter(|(_, i)| !excludes.contains(i))
         .collect::<HashMap<Point, usize>>();
 
     // Group grid entries by their closest coord id.
@@ -82,6 +92,12 @@ pub fn day6() -> std::io::Result<()> {
 
 fn calcManhattan(a: &Point, b: &Point) -> i32 {
     (a.0 - b.0).abs() + (a.1 - b.1).abs()
+}
+
+fn exclude(coord: Point, grid: &HashMap<Point, usize>, excludes: &mut HashSet<usize>) {
+    if grid.contains_key(&coord) {
+        excludes.insert(grid[&coord]);
+    }
 }
 
 type Point = (i32, i32);
