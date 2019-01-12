@@ -40,3 +40,14 @@ pub fn intersection(a: u32, b: u32) -> u32 {
 pub fn difference(a: u32, b: u32) -> u32 {
     a & !b
 }
+
+pub fn wrap(v: isize, len: usize) -> usize {
+    if len == 0 {
+        return 0;
+    }
+    let mut wrapped = v % len as isize;
+    if wrapped < 0 {
+        wrapped += len as isize;
+    }
+    return wrapped as usize;
+}
