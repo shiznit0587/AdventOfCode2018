@@ -13,6 +13,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day10;
 
 pub mod utils;
 
@@ -30,6 +31,7 @@ fn main() -> std::io::Result<()> {
     timings += time_day(day7::day7, 7)?;
     timings += time_day(day8::day8, 8)?;
     timings += time_day(day9::day9, 9)?;
+    timings += time_day(day10::day10, 10)?;
 
     println!("*************************************\n");
     println!(
