@@ -58,8 +58,7 @@ fn print_sky(stars: &Vec<Star>) {
     let mut sky: HashSet<(i32, i32)> = HashSet::new();
 
     for star in stars {
-        let star = (star.position.0 - bounds.0, star.position.1 - bounds.1);
-        sky.insert(star);
+        sky.insert((star.position.0 - bounds.0, star.position.1 - bounds.1));
     }
 
     for j in 0..bounds.3 + 1 {
