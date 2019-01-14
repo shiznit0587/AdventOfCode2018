@@ -30,7 +30,7 @@ fn build_sums(grid: &[[i32; 300]; 300], patch_size: u32) -> Vec<i32> {
     let mut sums = vec![0; (sums_width * sums_width) as usize];
 
     for coord in iproduct!(0..sums_width, 0..sums_width) {
-        sums[(coord.0 * sums_width + coord.1) as usize] = iproduct!(0..3, 0..3)
+        sums[(coord.0 * sums_width + coord.1) as usize] = iproduct!(0..patch_size, 0..patch_size)
             .map(|c| grid[(coord.0 + c.0) as usize][(coord.1 + c.1) as usize])
             .sum();
     }
