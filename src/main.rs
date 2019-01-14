@@ -5,7 +5,23 @@ use std::ops::AddAssign;
 use std::time::{Duration, Instant};
 
 mod day1;
+mod day10;
+mod day11;
+mod day12;
+mod day13;
+mod day14;
+mod day15;
+mod day16;
+mod day17;
+mod day18;
+mod day19;
 mod day2;
+mod day20;
+mod day21;
+mod day22;
+mod day23;
+mod day24;
+mod day25;
 mod day3;
 mod day4;
 mod day5;
@@ -13,7 +29,6 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day10;
 
 pub mod utils;
 
@@ -32,6 +47,21 @@ fn main() -> std::io::Result<()> {
     timings += time_day(day8::day8, 8)?;
     timings += time_day(day9::day9, 9)?;
     timings += time_day(day10::day10, 10)?;
+    timings += time_day(day11::day11, 11)?;
+    timings += time_day(day12::day12, 12)?;
+    timings += time_day(day13::day13, 13)?;
+    timings += time_day(day14::day14, 14)?;
+    timings += time_day(day15::day15, 15)?;
+    timings += time_day(day16::day16, 16)?;
+    timings += time_day(day17::day17, 17)?;
+    timings += time_day(day18::day18, 18)?;
+    timings += time_day(day19::day19, 19)?;
+    timings += time_day(day20::day20, 20)?;
+    timings += time_day(day21::day21, 21)?;
+    timings += time_day(day22::day22, 22)?;
+    timings += time_day(day23::day23, 23)?;
+    timings += time_day(day24::day24, 24)?;
+    timings += time_day(day25::day25, 25)?;
 
     println!("*************************************\n");
     println!(

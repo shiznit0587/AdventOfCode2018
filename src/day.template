@@ -1,5 +1,0 @@
-pub fn day%%DAY%%(lines: &mut Vec<String>) {
-    println!("Running Day %%DAY%% - a");
-
-    println!("Running Day %%DAY%% - b");
-}
