@@ -1,6 +1,9 @@
 // suppress for the whole module with inner attribute...
 #![allow(non_snake_case)]
 
+#[macro_use]
+extern crate itertools;
+
 use std::ops::AddAssign;
 use std::time::{Duration, Instant};
 
