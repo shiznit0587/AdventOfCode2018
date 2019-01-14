@@ -22,27 +22,31 @@ pub fn day11(lines: &mut Vec<String>) {
 
     println!("Running Day 11 - b");
 
-    let mut patch_size_winner: [Option<Identifier>; GRID_SIZE] = [None; GRID_SIZE];
-    let mut sums: Sums = build_sums(&grid, 1);
-    patch_size_winner[0] = Some(sums.find_winner());
+    let mut patch_size_winner: [Identifier; GRID_SIZE] = [((0, 0), 0); GRID_SIZE];
+    let mut all_sums: Vec<Sums> = Vec::with_capacity(GRID_SIZE);
 
-    for patch_size in 2..GRID_SIZE + 1 {
-        sums = iter_sums(&grid, &sums);
-        patch_size_winner[patch_size - 1] = Some(sums.find_winner());
+    all_sums.push(build_sums(&grid, 1));
+    patch_size_winner[0] = all_sums[0].find_winner();
+    all_sums.push(build_sums(&grid, 2));
+    patch_size_winner[1] = all_sums[1].find_winner();
+
+    for patch_size in 3..GRID_SIZE + 1 {
+        all_sums.push(iter_sums(&grid, &all_sums, patch_size));
+        patch_size_winner[patch_size - 1] = all_sums[patch_size - 1].find_winner();
     }
 
     let winner = patch_size_winner
         .iter()
         .enumerate()
-        .max_by(|a, b| a.1.unwrap().1.cmp(&b.1.unwrap().1))
+        .max_by(|a, b| (a.1).1.cmp(&(b.1).1))
         .unwrap();
 
     println!(
         "Largest Power Square Identifier = {},{},{} with power = {}",
-        (winner.1.unwrap().0).0,
-        (winner.1.unwrap().0).1,
+        ((winner.1).0).0,
+        ((winner.1).0).1,
         winner.0 + 1,
-        winner.1.unwrap().1
+        (winner.1).1
     );
 }
 
@@ -62,7 +66,28 @@ fn build_sums(grid: &Grid, patch_size: usize) -> Sums {
     sums
 }
 
-fn iter_sums(grid: &Grid, prev_sums: &Sums) -> Sums {
+fn iter_sums(grid: &Grid, all_sums: &Vec<Sums>, patch_size: usize) -> Sums {
+    if patch_size % 2 == 0 {
+        iter_sums_even(&all_sums[patch_size / 2 - 1])
+    } else {
+        iter_sums_odd(&grid, &all_sums[patch_size - 2])
+    }
+}
+
+fn iter_sums_even(half_sums: &Sums) -> Sums {
+    let mut sums = Sums::new(half_sums.patch_size * 2);
+
+    for coord in iproduct!(0..sums.width, 0..sums.width) {
+        sums[coord.0][coord.1] = half_sums[coord.0][coord.1]
+            + half_sums[coord.0 + half_sums.patch_size][coord.1]
+            + half_sums[coord.0][coord.1 + half_sums.patch_size]
+            + half_sums[coord.0 + half_sums.patch_size][coord.1 + half_sums.patch_size];
+    }
+
+    sums
+}
+
+fn iter_sums_odd(grid: &Grid, prev_sums: &Sums) -> Sums {
     let mut sums = Sums::new(prev_sums.patch_size + 1);
 
     for coord in iproduct!(0..sums.width, 0..sums.width) {
