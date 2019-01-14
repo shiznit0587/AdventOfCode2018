@@ -40,31 +40,31 @@ fn main() -> std::io::Result<()> {
 
     let mut timings: Timings = Timings(Duration::new(0, 0), Duration::new(0, 0));
 
-    timings += time_day(day1::day1, 1)?;
-    timings += time_day(day2::day2, 2)?;
-    timings += time_day(day3::day3, 3)?;
-    timings += time_day(day4::day4, 4)?;
-    timings += time_day(day5::day5, 5)?;
-    timings += time_day(day6::day6, 6)?;
-    timings += time_day(day7::day7, 7)?;
-    timings += time_day(day8::day8, 8)?;
-    timings += time_day(day9::day9, 9)?;
-    timings += time_day(day10::day10, 10)?;
+    // timings += time_day(day1::day1, 1)?;
+    // timings += time_day(day2::day2, 2)?;
+    // timings += time_day(day3::day3, 3)?;
+    // timings += time_day(day4::day4, 4)?;
+    // timings += time_day(day5::day5, 5)?;
+    // timings += time_day(day6::day6, 6)?;
+    // timings += time_day(day7::day7, 7)?;
+    // timings += time_day(day8::day8, 8)?;
+    // timings += time_day(day9::day9, 9)?;
+    // timings += time_day(day10::day10, 10)?;
     timings += time_day(day11::day11, 11)?;
-    timings += time_day(day12::day12, 12)?;
-    timings += time_day(day13::day13, 13)?;
-    timings += time_day(day14::day14, 14)?;
-    timings += time_day(day15::day15, 15)?;
-    timings += time_day(day16::day16, 16)?;
-    timings += time_day(day17::day17, 17)?;
-    timings += time_day(day18::day18, 18)?;
-    timings += time_day(day19::day19, 19)?;
-    timings += time_day(day20::day20, 20)?;
-    timings += time_day(day21::day21, 21)?;
-    timings += time_day(day22::day22, 22)?;
-    timings += time_day(day23::day23, 23)?;
-    timings += time_day(day24::day24, 24)?;
-    timings += time_day(day25::day25, 25)?;
+    // timings += time_day(day12::day12, 12)?;
+    // timings += time_day(day13::day13, 13)?;
+    // timings += time_day(day14::day14, 14)?;
+    // timings += time_day(day15::day15, 15)?;
+    // timings += time_day(day16::day16, 16)?;
+    // timings += time_day(day17::day17, 17)?;
+    // timings += time_day(day18::day18, 18)?;
+    // timings += time_day(day19::day19, 19)?;
+    // timings += time_day(day20::day20, 20)?;
+    // timings += time_day(day21::day21, 21)?;
+    // timings += time_day(day22::day22, 22)?;
+    // timings += time_day(day23::day23, 23)?;
+    // timings += time_day(day24::day24, 24)?;
+    // timings += time_day(day25::day25, 25)?;
 
     println!("*************************************\n");
     println!(
