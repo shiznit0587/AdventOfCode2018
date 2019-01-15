@@ -1,5 +1,3 @@
-extern crate regex;
-
 use crate::utils;
 use regex::Regex;
 use std::collections::HashMap;
