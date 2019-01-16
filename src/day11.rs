@@ -31,7 +31,7 @@ pub fn day11(lines: &mut Vec<String>) {
     patch_size_winner[1] = all_sums[1].find_winner();
 
     for patch_size in 3..GRID_SIZE + 1 {
-        all_sums.push(iter_sums(&grid, &all_sums, patch_size));
+        all_sums.push(iter_sums(&all_sums, patch_size));
         patch_size_winner[patch_size - 1] = all_sums[patch_size - 1].find_winner();
     }
 
@@ -66,16 +66,17 @@ fn build_sums(grid: &Grid, patch_size: usize) -> Sums {
     sums
 }
 
-fn iter_sums(grid: &Grid, all_sums: &Vec<Sums>, patch_size: usize) -> Sums {
+fn iter_sums(all_sums: &Vec<Sums>, patch_size: usize) -> Sums {
     if patch_size % 2 == 0 {
-        iter_sums_even(&all_sums[patch_size / 2 - 1])
+        iter_sums_even(&all_sums, patch_size)
     } else {
-        iter_sums_odd(&grid, &all_sums[patch_size - 2])
+        iter_sums_odd(&all_sums, patch_size)
     }
 }
 
-fn iter_sums_even(half_sums: &Sums) -> Sums {
-    let mut sums = Sums::new(half_sums.patch_size * 2);
+fn iter_sums_even(all_sums: &Vec<Sums>, patch_size: usize) -> Sums {
+    let half_sums = &all_sums[patch_size / 2 - 1];
+    let mut sums = Sums::new(patch_size);
 
     for coord in iproduct!(0..sums.width, 0..sums.width) {
         sums[coord.0][coord.1] = half_sums[coord.0][coord.1]
@@ -87,26 +88,20 @@ fn iter_sums_even(half_sums: &Sums) -> Sums {
     sums
 }
 
-fn iter_sums_odd(grid: &Grid, prev_sums: &Sums) -> Sums {
-    let mut sums = Sums::new(prev_sums.patch_size + 1);
+fn iter_sums_odd(all_sums: &Vec<Sums>, patch_size: usize) -> Sums {
+    let small = patch_size / 2;
+    let large = patch_size / 2 + 1;
+    let small_sums = &all_sums[small - 1];
+    let large_sums = &all_sums[large - 1];
+
+    let mut sums = Sums::new(patch_size);
 
     for coord in iproduct!(0..sums.width, 0..sums.width) {
-        // Get a collection of coords that are the edges to add to the previous sum
-        let mut edge_coords: Vec<Point> = Vec::with_capacity(sums.patch_size * 2);
-        for i in 0..sums.patch_size {
-            edge_coords.push((coord.0 + sums.patch_size - 1, coord.1 + i));
-            edge_coords.push((coord.0 + i, coord.1 + sums.patch_size - 1));
-        }
-
-        // Remove the duplicate corner
-        edge_coords.pop();
-
-        // Sum the values of the edge coords
-        let edges_sum: i32 = edge_coords.iter().map(|c| grid[c.0][c.1]).sum();
-
-        // Track the iterative sum
-        let prev_sum = prev_sums[coord.0][coord.1];
-        sums[coord.0][coord.1] = prev_sum + edges_sum;
+        sums[coord.0][coord.1] = large_sums[coord.0][coord.1]
+            + large_sums[coord.0 + small][coord.1 + small]
+            + small_sums[coord.0 + large][coord.1]
+            + small_sums[coord.0][coord.1 + large]
+            - all_sums[0][coord.0 + small][coord.1 + small];
     }
 
     sums
