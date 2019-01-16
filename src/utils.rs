@@ -29,8 +29,20 @@ pub fn unset_bit(bits: &mut u32, bit: usize) {
     *bits &= !(1 << bit);
 }
 
+pub fn set_bit_to(bits: &mut u32, bit: usize, value: bool) {
+    if value {
+        set_bit(bits, bit);
+    } else {
+        unset_bit(bits, bit);
+    }
+}
+
+pub fn get_bit(bits: &u32, bit: usize) -> u32 {
+    (*bits >> bit) & 1
+}
+
 pub fn is_bit_set(bits: &u32, bit: usize) -> bool {
-    *bits & (1 << bit) != 0
+    get_bit(bits, bit) != 0
 }
 
 pub fn intersection(a: u32, b: u32) -> u32 {
