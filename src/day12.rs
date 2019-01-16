@@ -14,12 +14,7 @@ pub fn day12(lines: &mut Vec<String>) {
         .map(|c| c == '#')
         .collect::<Vec<bool>>();
 
-    let mut pots = Pots::new();
-
-    for i in initial_state.iter().enumerate() {
-        pots.set_pot(i.0 as isize, *i.1);
-    }
-
+    let mut pots = Pots::new(&initial_state);
     // println!(" 0: {:?}", pots);
 
     let rex = Regex::new(r"(.)(.)(.)(.)(.) => (.)").unwrap();
@@ -33,25 +28,44 @@ pub fn day12(lines: &mut Vec<String>) {
         .collect::<HashMap<u32, Rule>>();
 
     for _gen in 1..=20 {
-        pots.try_grow();
-        let prev_pots = pots.clone();
-
-        let pot_range = prev_pots.get_pot_range();
-        for pot in pot_range.0..pot_range.1 {
-            pots.set_pot(pot, rules[&prev_pots.get_pots(pot)].result);
-        }
-
-        // println!("{:2}: {:?}", _gen, pots);
+        pots = simulate_gen(&mut pots, &rules);
+        // println!("{:3}: {:?}", _gen, pots);
+        // println!("{},{}", _gen, pots.potted_sum());
     }
 
-    let pot_range = pots.get_pot_range();
-    let sum: isize = (pot_range.0..pot_range.1)
-        .filter(|p| pots.get_pot(*p))
-        .sum();
-
-    println!("Potted Sum = {}", sum);
+    println!("Potted Sum = {}", pots.potted_sum());
 
     println!("Running Day 12 - b");
+
+    pots = Pots::new(&initial_state);
+
+    let mut prev_sum: isize = 0;
+    let mut prev_diffs: [isize; 3] = [0, 1, 2];
+    let mut gen: isize = 0;
+
+    // Find when the growth rate stabilizes for three generations
+    while prev_diffs[0] != prev_diffs[1] || prev_diffs[1] != prev_diffs[2] {
+        pots = simulate_gen(&mut pots, &rules);
+        let sum = pots.potted_sum();
+        prev_diffs[(gen % 3) as usize] = sum - prev_sum;
+        prev_sum = sum;
+        gen += 1;
+    }
+
+    let final_sum: isize = prev_sum + (50_000_000_000 - gen) * prev_diffs[0];
+
+    println!("Potted Sum at Gen 50,000,000,000 = {}", final_sum);
+}
+
+fn simulate_gen(prev_pots: &mut Pots, rules: &HashMap<u32, Rule>) -> Pots {
+    prev_pots.try_grow();
+    let mut pots = prev_pots.clone();
+
+    let pot_range = prev_pots.get_pot_range();
+    for pot in pot_range.0..pot_range.1 {
+        pots.set_pot(pot, rules[&prev_pots.get_pots(pot)].result);
+    }
+    pots
 }
 
 fn to_char(b: bool) -> char {
@@ -102,11 +116,17 @@ struct Pots {
 }
 
 impl Pots {
-    fn new() -> Self {
-        Pots {
-            pots: vec![0; 4],
+    fn new(state: &Vec<bool>) -> Self {
+        let mut pots = Pots {
+            pots: vec![0; state.len() / 32 + 1],
             offset: 0,
+        };
+
+        for i in state.iter().enumerate() {
+            pots.set_pot(i.0 as isize, *i.1);
         }
+
+        pots
     }
 
     #[inline]
@@ -164,6 +184,13 @@ impl Pots {
             self.offset as isize * -32 + 2,
             (self.pots.len() as isize - self.offset as isize) * 32 - 2,
         )
+    }
+
+    fn potted_sum(&self) -> isize {
+        let pot_range = self.get_pot_range();
+        (pot_range.0..pot_range.1)
+            .filter(|p| self.get_pot(*p))
+            .sum()
     }
 }
 
