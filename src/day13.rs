@@ -1,14 +1,13 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 pub fn day13(lines: &mut Vec<String>) {
     println!("Running Day 13 - a");
 
     let mut map: Map = vec![vec![TrackType::None; 150]; 150];
-    let mut carts: Carts = BinaryHeap::new();
+    let mut carts: Vec<Cart> = Vec::new();
 
+    let mut cart_id = 0;
     for (j, line) in lines.iter().enumerate() {
         for (i, c) in line.chars().enumerate() {
             map[i][j] = match c {
@@ -21,47 +20,68 @@ pub fn day13(lines: &mut Vec<String>) {
             };
 
             match c {
-                '^' => carts.push(Cart::new((i, j), Direction::North)),
-                'v' => carts.push(Cart::new((i, j), Direction::South)),
-                '<' => carts.push(Cart::new((i, j), Direction::West)),
-                '>' => carts.push(Cart::new((i, j), Direction::East)),
+                '^' | 'v' | '<' | '>' => {
+                    carts.insert(
+                        cart_id,
+                        Cart::new(cart_id, (i, j), Direction::from_char(c).unwrap()),
+                    );
+                    cart_id += 1;
+                }
                 _ => {}
             }
         }
     }
 
     // _print_map(&map, &carts);
-    while let Some(c) = cycle(&map, &mut carts) {
-        // print_map(&map, &c);
-        carts = c;
+    while carts.iter().filter(|c| c.alive).count() > 1 {
+        cycle(&map, &mut carts);
+        // _print_map(&map, &carts);
     }
 
     println!("Running Day 13 - b");
+
+    println!(
+        "Last Cart Location = {:?}",
+        carts.iter().filter(|c| c.alive).next().unwrap().location
+    );
 }
 
-fn cycle(map: &Map, carts: &mut Carts) -> Option<Carts> {
-    let mut occupied = carts.iter().map(|c| c.location).collect::<HashSet<Point>>();
-    let mut new_carts = BinaryHeap::new();
+fn cycle(map: &Map, carts: &mut Vec<Cart>) {
+    let mut queue = carts.iter().filter(|c| c.alive).collect::<Vec<&Cart>>();
+    queue.sort();
+    let mut queue = queue.iter().map(|c| c.id).collect::<Vec<usize>>();
 
-    while let Some(mut cart) = carts.pop() {
+    let all_alive = queue.len() == carts.len();
+
+    let mut occupied = carts
+        .iter()
+        .filter(|c| c.alive)
+        .map(|c| (c.location, c.id))
+        .collect::<HashMap<Point, usize>>();
+
+    while let Some(cart_id) = queue.pop() {
+        let cart = carts.get_mut(cart_id).unwrap();
         occupied.remove(&cart.location);
         cart.travel(&map);
 
-        if occupied.contains(&cart.location) {
-            println!("Crash at location {:?}", cart.location);
-            return None;
+        if occupied.contains_key(&cart.location) {
+            if all_alive {
+                println!("Crash at location {:?}", cart.location);
+            }
+
+            let crashed_id = *occupied.get(&cart.location).unwrap();
+            carts.get_mut(crashed_id).unwrap().alive = false;
+            carts.get_mut(cart_id).unwrap().alive = false;
+        } else {
+            occupied.insert(cart.location, cart_id);
         }
-
-        occupied.insert(cart.location);
-        new_carts.push(cart);
     }
-
-    Some(new_carts)
 }
 
-fn _print_map(map: &Map, carts: &Carts) {
+fn _print_map(map: &Map, carts: &Vec<Cart>) {
     let carts = carts
         .iter()
+        .filter(|c| c.alive)
         .map(|c| (c.location, c))
         .collect::<HashMap<Point, &Cart>>();
 
@@ -79,21 +99,24 @@ fn _print_map(map: &Map, carts: &Carts) {
 
 type Point = (usize, usize);
 type Map = Vec<Vec<TrackType>>;
-type Carts = BinaryHeap<Cart>;
 
 #[derive(Eq, PartialEq, Clone)]
 struct Cart {
+    id: usize,
     location: Point,
     direction: Direction,
     intersect: IntersectionBehavior,
+    alive: bool,
 }
 
 impl Cart {
-    fn new(location: Point, dir: Direction) -> Self {
+    fn new(id: usize, location: Point, dir: Direction) -> Self {
         Cart {
+            id: id,
             location: location,
             direction: dir,
             intersect: IntersectionBehavior::TurnLeft,
+            alive: true,
         }
     }
 
@@ -131,12 +154,7 @@ impl Cart {
     }
 
     fn _to_char(&self) -> char {
-        match self.direction {
-            Direction::North => '^',
-            Direction::South => 'v',
-            Direction::East => '>',
-            Direction::West => '<',
-        }
+        self.direction._to_char()
     }
 }
 
@@ -160,6 +178,27 @@ enum Direction {
     South,
     East,
     West,
+}
+
+impl Direction {
+    fn _to_char(&self) -> char {
+        match self {
+            Direction::North => '^',
+            Direction::South => 'v',
+            Direction::East => '>',
+            Direction::West => '<',
+        }
+    }
+
+    fn from_char(c: char) -> Option<Self> {
+        match c {
+            '^' => Some(Direction::North),
+            'v' => Some(Direction::South),
+            '>' => Some(Direction::East),
+            '<' => Some(Direction::West),
+            _ => None,
+        }
+    }
 }
 
 impl Direction {
