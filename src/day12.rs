@@ -1,6 +1,5 @@
 use crate::utils;
 use regex::Regex;
-use std::collections::HashMap;
 use std::fmt;
 
 pub fn day12(lines: &mut Vec<String>) {
@@ -19,13 +18,13 @@ pub fn day12(lines: &mut Vec<String>) {
 
     let rex = Regex::new(r"(.)(.)(.)(.)(.) => (.)").unwrap();
 
-    let rules = lines
+    let mut rules = lines
         .iter()
         .skip(2)
         .map(|l| rex.captures(l).unwrap())
         .map(|c| Rule::new(&c))
-        .map(|r| (r.check, r))
-        .collect::<HashMap<u32, Rule>>();
+        .collect::<Vec<Rule>>();
+    rules.sort_by(|a, b| a.check.cmp(&b.check));
 
     for _gen in 1..=20 {
         pots = simulate_gen(&mut pots, &rules);
@@ -57,13 +56,13 @@ pub fn day12(lines: &mut Vec<String>) {
     println!("Potted Sum at Gen 50,000,000,000 = {}", final_sum);
 }
 
-fn simulate_gen(prev_pots: &mut Pots, rules: &HashMap<u32, Rule>) -> Pots {
+fn simulate_gen(prev_pots: &mut Pots, rules: &Vec<Rule>) -> Pots {
     prev_pots.try_grow();
     let mut pots = prev_pots.clone();
 
     let pot_range = prev_pots.get_pot_range();
     for pot in pot_range.0..pot_range.1 {
-        pots.set_pot(pot, rules[&prev_pots.get_pots(pot)].result);
+        pots.set_pot(pot, rules[prev_pots.get_pots(pot) as usize].result);
     }
     pots
 }
