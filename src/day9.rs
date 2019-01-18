@@ -1,6 +1,5 @@
 use crate::utils;
 use regex::Regex;
-use std::collections::HashMap;
 
 pub fn day9(lines: &mut Vec<String>) {
     println!("Running Day 9 - a");
@@ -8,7 +7,7 @@ pub fn day9(lines: &mut Vec<String>) {
     let rex = Regex::new(r"(\d+).* (\d+)").unwrap();
     let caps = rex.captures(lines.get(0).unwrap()).unwrap();
     let player_count: usize = utils::parse(&caps[1]);
-    let last_marble: u32 = utils::parse(&caps[2]);
+    let last_marble: usize = utils::parse(&caps[2]);
 
     let scores = solve_a(player_count, last_marble);
     print_winner(&scores);
@@ -19,13 +18,13 @@ pub fn day9(lines: &mut Vec<String>) {
     print_winner(&scores);
 }
 
-fn solve_a(player_count: usize, last_marble: u32) -> Vec<u32> {
+fn solve_a(player_count: usize, last_marble: usize) -> Vec<usize> {
     let mut cursor = 0;
     let mut cur_player = 0;
     let mut cur_marble = 1;
 
     let mut scores = vec![0; player_count];
-    let mut marbles: Vec<u32> = Vec::with_capacity((last_marble + 1) as usize);
+    let mut marbles: Vec<usize> = Vec::with_capacity((last_marble + 1) as usize);
     marbles.push(0);
 
     while cur_marble <= last_marble {
@@ -56,57 +55,50 @@ fn solve_a(player_count: usize, last_marble: u32) -> Vec<u32> {
     scores
 }
 
-fn solve_b(player_count: usize, last_marble: u32) -> Vec<u32> {
+fn solve_b(player_count: usize, last_marble: usize) -> Vec<usize> {
     let mut cursor = 0;
     let mut cur_player = 0;
     let mut cur_marble = 1;
 
-    let mut scores: Vec<u32> = vec![0; player_count];
-    let mut marbles: HashMap<u32, Marble> =
-        HashMap::with_capacity(last_marble as usize / 23 * 21 + 2);
+    let mut scores: Vec<usize> = vec![0; player_count];
+    let mut marbles: Vec<Marble> = vec![
+        Marble {
+            prev: None,
+            next: None
+        };
+        (last_marble + 1) as usize
+    ];
 
-    for i in 0..last_marble + 1 {
-        if i % 23 != 0 || i == 0 {
-            marbles.insert(
-                i,
-                Marble {
-                    id: i,
-                    prev: None,
-                    next: None,
-                },
-            );
-        }
-    }
-    marbles.get_mut(&0).unwrap().prev = Some(0);
-    marbles.get_mut(&0).unwrap().next = Some(0);
+    marbles.get_mut(0).unwrap().prev = Some(0);
+    marbles.get_mut(0).unwrap().next = Some(0);
 
     while cur_marble <= last_marble {
         if cur_marble % 23 == 0 {
             scores[cur_player] += cur_marble;
             for _ in 0..7 {
-                cursor = marbles[&cursor].prev.unwrap();
+                cursor = marbles[cursor].prev.unwrap();
             }
             scores[cur_player] += cursor;
 
-            let removed = marbles.remove(&cursor).unwrap();
-            cursor = removed.next.unwrap();
-            marbles.get_mut(&removed.prev.unwrap()).unwrap().next = Some(removed.next.unwrap());
-            marbles.get_mut(&removed.next.unwrap()).unwrap().prev = Some(removed.prev.unwrap());
+            let prev = marbles.get(cursor).unwrap().prev.unwrap();
+            let next = marbles.get(cursor).unwrap().next.unwrap();
+
+            cursor = next;
+
+            marbles.get_mut(prev).unwrap().next = Some(next);
+            marbles.get_mut(next).unwrap().prev = Some(prev);
         } else {
-            cursor = marbles[&cursor].next.unwrap();
+            cursor = marbles[cursor].next.unwrap();
+            let next = marbles.get(cursor).unwrap().next.unwrap();
 
-            let mut inserted = marbles.remove(&cur_marble).unwrap();
+            let mut inserted = marbles.get_mut(cur_marble).unwrap();
             inserted.prev = Some(cursor);
-            inserted.next = Some(marbles[&cursor].next.unwrap());
-            marbles.insert(inserted.id, inserted);
+            inserted.next = Some(next);
 
-            marbles
-                .get_mut(&marbles[&cursor].next.unwrap())
-                .unwrap()
-                .prev = Some(cur_marble);
-            marbles.get_mut(&cursor).unwrap().next = Some(cur_marble);
+            marbles.get_mut(next).unwrap().prev = Some(cur_marble);
+            marbles.get_mut(cursor).unwrap().next = Some(cur_marble);
 
-            cursor = marbles[&cursor].next.unwrap();
+            cursor = marbles[cursor].next.unwrap();
         }
 
         cur_player = (cur_player + 1) % player_count;
@@ -116,7 +108,7 @@ fn solve_b(player_count: usize, last_marble: u32) -> Vec<u32> {
     scores
 }
 
-fn print_winner(scores: &Vec<u32>) {
+fn print_winner(scores: &Vec<usize>) {
     let winner = scores
         .iter()
         .enumerate()
@@ -142,8 +134,8 @@ fn _print_marbles(marbles: &Vec<u32>, cur_player: usize, cursor: usize) {
     );
 }
 
+#[derive(Clone)]
 struct Marble {
-    id: u32,
-    prev: Option<u32>,
-    next: Option<u32>,
+    prev: Option<usize>,
+    next: Option<usize>,
 }
