@@ -33,6 +33,48 @@ pub fn day14(lines: &mut Vec<String>) {
     println!("Scores = {}", scores);
 
     println!("Running Day 14 - b");
+
+    let target = split_digits(target);
+    let mut recipes: Vec<usize> = vec![0; 21000000];
+    recipes[0] = 3;
+    recipes[1] = 7;
+
+    count = 2;
+    elves = (0, 1);
+    let mut index = None;
+    let mut digits = (None, None);
+
+    while index.is_none() {
+        let sum = recipes[elves.0] + recipes[elves.1];
+        split_digits_b(sum, &mut digits);
+        let mut digit_count = 1;
+        if digits.0.is_some() {
+            recipes[count] = digits.0.unwrap();
+            count += 1;
+            digit_count += 1;
+        }
+        recipes[count] = digits.1.unwrap();
+        count += 1;
+
+        elves.0 = (elves.0 + recipes[elves.0] + 1) % count;
+        elves.1 = (elves.1 + recipes[elves.1] + 1) % count;
+        // _print_recipes(&recipes, count, elves);
+
+        for i in 0..digit_count {
+            let end = count - i;
+            if end < target.len() {
+                break;
+            }
+            let start = count - target.len() - i;
+
+            if &recipes[start..end] == &target[..] {
+                index = Some(start);
+                break;
+            }
+        }
+    }
+
+    println!("Recipes Left of Input = {}", index.unwrap());
 }
 
 fn split_digits(mut num: usize) -> Vec<usize> {
@@ -47,6 +89,15 @@ fn split_digits(mut num: usize) -> Vec<usize> {
     digits.reverse();
 
     digits
+}
+
+fn split_digits_b(num: usize, digits: &mut (Option<usize>, Option<usize>)) {
+    digits.1 = Some(num % 10);
+    if num >= 10 {
+        digits.0 = Some(num / 10);
+    } else {
+        digits.0 = None;
+    }
 }
 
 fn _print_recipes(recipes: &Vec<usize>, count: usize, elves: (usize, usize)) {
