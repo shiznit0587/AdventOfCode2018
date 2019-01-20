@@ -35,7 +35,7 @@ pub fn day14(lines: &mut Vec<String>) {
     println!("Running Day 14 - b");
 
     let target = split_digits(target);
-    let mut recipes: Vec<usize> = vec![0; 21000000];
+    let mut recipes: Vec<usize> = vec![0; 1000000];
     recipes[0] = 3;
     recipes[1] = 7;
 
@@ -45,6 +45,10 @@ pub fn day14(lines: &mut Vec<String>) {
     let mut digits = (None, None);
 
     while index.is_none() {
+        if recipes.len() < count + 2 {
+            recipes.extend_from_slice(&vec![0; 1000000]);
+        }
+
         let sum = recipes[elves.0] + recipes[elves.1];
         split_digits_b(sum, &mut digits);
         let mut digit_count = 1;
