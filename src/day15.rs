@@ -9,7 +9,7 @@ pub fn day15(lines: &mut Vec<String>) {
 
     let mut map = Map::new(&lines);
 
-    map._print();
+    // map._print();
 
     let mut ended = false;
     let mut round = 0;
@@ -17,6 +17,10 @@ pub fn day15(lines: &mut Vec<String>) {
         let mut queue = build_queue(&map);
 
         while let Some(mut entry) = queue.pop() {
+            if map[entry].is_open() {
+                continue;
+            }
+
             let targets = find_targets(entry, &map);
 
             if targets.is_empty() {
@@ -24,15 +28,8 @@ pub fn day15(lines: &mut Vec<String>) {
                 break;
             }
 
-            let target_locations: Vec<Point> = targets.iter().map(|t| t.location).collect();
-            let adjacent = get_neighbors(entry, &map)
-                .iter()
-                .find(|p| target_locations.contains(&p))
-                .is_some();
-
-            if !adjacent {
+            if !target_adjacent(entry, &map, &targets) {
                 let target_points = find_target_points(targets, &map);
-
                 if target_points.is_empty() {
                     continue;
                 }
@@ -43,15 +40,32 @@ pub fn day15(lines: &mut Vec<String>) {
                     entry = dest.unwrap();
                 }
             }
+
+            let mut enemies = get_enemy_neighbors(entry, &map);
+            if !enemies.is_empty() {
+                enemies.sort_by(|a, b| a.hp.cmp(&b.hp).then(b.location.cmp(&a.location)));
+                let target = enemies.first().unwrap();
+                map.attack(entry, target.location);
+            }
         }
 
-        map._print();
-
+        // map._print();
         round += 1;
-        ended = round > 3;
     }
 
-    println!("Combat finished after {} rounds", round);
+    round -= 1;
+
+    let hp_sum: usize = itertools::chain(&map.elves, &map.goblins)
+        .filter(|u| u.alive)
+        .map(|u| u.hp)
+        .sum();
+
+    println!(
+        "Combat finished after {} rounds, hp sum = {}, outcome = {}",
+        round,
+        hp_sum,
+        round * hp_sum
+    );
 
     println!("Running Day 15 - b");
 }
@@ -78,6 +92,14 @@ fn find_targets(start: Point, map: &Map) -> Vec<&Unit> {
     .iter()
     .filter(|u| u.alive)
     .collect()
+}
+
+fn target_adjacent(entry: Point, map: &Map, targets: &Vec<&Unit>) -> bool {
+    let target_locations: Vec<Point> = targets.iter().map(|t| t.location).collect();
+    get_neighbors(entry, &map)
+        .iter()
+        .find(|p| target_locations.contains(&p))
+        .is_some()
 }
 
 // Find all open points adjacent to a target.
@@ -145,6 +167,21 @@ fn get_open_neighbors(p: Point, map: &Map) -> Vec<Point> {
         .collect()
 }
 
+fn get_enemy_neighbors(p: Point, map: &Map) -> Vec<&Unit> {
+    let neighbors = get_neighbors(p, &map);
+
+    let enemies = match map[p] {
+        Tile::Goblin(_) => &map.elves,
+        Tile::Elf(_) => &map.goblins,
+        _ => panic!(),
+    };
+
+    enemies
+        .iter()
+        .filter(|u| u.alive && neighbors.contains(&u.location))
+        .collect()
+}
+
 fn calc_manhattan(a: &Point, b: &Point) -> usize {
     absdiff(a.0, b.0) + absdiff(a.1, b.1)
 }
@@ -182,20 +219,6 @@ impl Tile {
             Tile::Open => '.',
             Tile::Goblin(_) => 'G',
             Tile::Elf(_) => 'E',
-        }
-    }
-
-    fn is_unit(&self) -> bool {
-        match self {
-            Tile::Goblin(_) | Tile::Elf(_) => true,
-            _ => false,
-        }
-    }
-
-    fn is_wall(&self) -> bool {
-        match self {
-            Tile::Wall => true,
-            _ => false,
         }
     }
 
@@ -252,11 +275,11 @@ impl Map {
 
         for p in iproduct!(0..map.height(), 0..map.width()) {
             match map.tiles[p.0][p.1] {
-                Tile::Goblin(i) => {
-                    map.goblins.push(Unit::new(i, Point(p.1, p.0)));
+                Tile::Goblin(_) => {
+                    map.goblins.push(Unit::new(Point(p.1, p.0)));
                 }
-                Tile::Elf(i) => {
-                    map.elves.push(Unit::new(i, Point(p.1, p.0)));
+                Tile::Elf(_) => {
+                    map.elves.push(Unit::new(Point(p.1, p.0)));
                 }
                 _ => (),
             }
@@ -292,6 +315,22 @@ impl Map {
         }
     }
 
+    fn attack(&mut self, _: Point, b: Point) {
+        let unit_b = match self[b] {
+            Tile::Goblin(id) => &mut self.goblins[id],
+            Tile::Elf(id) => &mut self.elves[id],
+            _ => panic!(),
+        };
+
+        if unit_b.hp > 3 {
+            unit_b.hp -= 3;
+        } else {
+            unit_b.hp = 0;
+            unit_b.alive = false;
+            self.tiles[b.1][b.0] = Tile::Open;
+        }
+    }
+
     fn _print(&self) {
         for line in self.tiles.iter() {
             println!("{}", line.iter().map(|t| t._to_char()).collect::<String>());
@@ -317,18 +356,16 @@ impl std::ops::Index<(usize, usize)> for Map {
 }
 
 struct Unit {
-    id: usize,
     location: Point,
-    hp: isize,
+    hp: usize,
     alive: bool,
 }
 
 impl Unit {
-    fn new(id: usize, location: Point) -> Self {
+    fn new(location: Point) -> Self {
         Unit {
-            id: id,
             location: location,
-            hp: 300,
+            hp: 200,
             alive: true,
         }
     }
