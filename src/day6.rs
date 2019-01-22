@@ -1,5 +1,6 @@
 use crate::utils;
 use itertools::Itertools;
+use pathfinding::utils::absdiff;
 use regex::Regex;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -89,7 +90,7 @@ pub fn day6(lines: &mut Vec<String>) {
 }
 
 fn calcManhattan(a: &Point, b: &Point) -> i32 {
-    (a.0 - b.0).abs() + (a.1 - b.1).abs()
+    absdiff(a.0, b.0) + absdiff(a.1, b.1)
 }
 
 fn exclude(coord: Point, grid: &HashMap<Point, usize>, excludes: &mut HashSet<usize>) {
