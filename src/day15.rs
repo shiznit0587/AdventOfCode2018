@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use pathfinding::directed::astar;
 use pathfinding::utils::absdiff;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -114,14 +113,20 @@ fn find_target_points(targets: Vec<&Unit>, map: &Map) -> BinaryHeap<Point> {
 
 // Find a adjacent destination Point to move a unit from start to that is one step closer,
 // in read order, to the closest reachable target, in read order.
-fn find_destination(start: Point, target_points: &BinaryHeap<Point>, map: &Map) -> Option<Point> {
+fn _find_destination_astar(
+    start: Point,
+    target_points: &BinaryHeap<Point>,
+    map: &Map,
+) -> Option<Point> {
+    use pathfinding::directed::astar;
+
     let choices: Vec<(usize, Point)> = target_points
         .iter()
         .filter_map(|tp| {
             let a_stars = astar::astar_bag_collect(
                 &start,
                 |&p| get_open_neighbors(p, &map).into_iter().map(|p| (p, 1)),
-                |p| calc_manhattan(p, &tp),
+                |p| _calc_manhattan(p, &tp),
                 |p| *p == *tp,
             );
 
@@ -141,6 +146,46 @@ fn find_destination(start: Point, target_points: &BinaryHeap<Point>, map: &Map) 
         Some(c) => Some(c.1),
         None => None,
     }
+}
+
+fn find_destination(start: Point, target_points: &BinaryHeap<Point>, map: &Map) -> Option<Point> {
+    use pathfinding::directed::bfs;
+
+    let bfs_results = target_points
+        .iter()
+        .map(|&tp| {
+            (
+                tp,
+                bfs::bfs(&start, |&p| get_open_neighbors(p, &map), |p| *p == tp),
+            )
+        })
+        .filter(|(_, bfs)| bfs.is_some())
+        .map(|(tp, bfs)| (tp, bfs.unwrap().len()))
+        .sorted_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(&a.0)))
+        .collect::<Vec<(Point, usize)>>();
+
+    if bfs_results.first().is_none() {
+        return None;
+    }
+
+    let (tp, distance) = bfs_results.first().unwrap();
+
+    Some(
+        *get_open_neighbors(start, &map)
+            .iter()
+            .map(|d| {
+                (
+                    d,
+                    bfs::bfs(d, |&p| get_open_neighbors(p, &map), |p| *p == *tp),
+                )
+            })
+            .filter(|(_, bfs)| bfs.is_some())
+            .map(|(d, bfs)| (d, bfs.unwrap().len()))
+            .filter(|(_, bfs)| *bfs == distance - 1)
+            .next()
+            .unwrap()
+            .0,
+    )
 }
 
 fn get_neighbors(p: Point, map: &Map) -> Vec<Point> {
@@ -182,7 +227,7 @@ fn get_enemy_neighbors(p: Point, map: &Map) -> Vec<&Unit> {
         .collect()
 }
 
-fn calc_manhattan(a: &Point, b: &Point) -> usize {
+fn _calc_manhattan(a: &Point, b: &Point) -> usize {
     absdiff(a.0, b.0) + absdiff(a.1, b.1)
 }
 
