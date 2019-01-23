@@ -6,67 +6,108 @@ use std::collections::BinaryHeap;
 pub fn day15(lines: &mut Vec<String>) {
     println!("Running Day 15 - a");
 
-    let mut map = Map::new(&lines);
+    let orig_map = Map::new(&lines);
 
+    let mut map = orig_map.clone();
+    let rounds = simulate_combat(&mut map);
+
+    println!(
+        "Combat finished after {} rounds, outcome = {}",
+        rounds,
+        calc_outcome(&map, rounds)
+    );
+
+    println!("Running Day 15 - b");
+
+    let mut result = (false, 0);
+    let mut strength = 2;
+
+    while !result.0 {
+        strength += 1;
+        map = orig_map.clone();
+        result = simulate_elf_victory(strength, &mut map);
+    }
+
+    println!(
+        "Combat finished with strength {} after {} rounds, outcome = {}",
+        strength,
+        result.1,
+        calc_outcome(&map, result.1)
+    );
+}
+
+fn calc_outcome(map: &Map, rounds: usize) -> usize {
+    rounds
+        * itertools::chain(&map.elves, &map.goblins)
+            .filter(|u| u.alive)
+            .map(|u| u.hp)
+            .sum::<usize>()
+}
+
+fn simulate_combat(map: &mut Map) -> usize {
     // map._print();
 
-    let mut ended = false;
     let mut round = 0;
-    while !ended {
-        let mut queue = build_queue(&map);
-
-        while let Some(mut entry) = queue.pop() {
-            if map[entry].is_open() {
-                continue;
-            }
-
-            let targets = find_targets(entry, &map);
-
-            if targets.is_empty() {
-                ended = true;
-                break;
-            }
-
-            if !target_adjacent(entry, &map, &targets) {
-                let target_points = find_target_points(targets, &map);
-                if target_points.is_empty() {
-                    continue;
-                }
-
-                let dest = find_destination(entry, &target_points, &map);
-                if dest.is_some() {
-                    map.swap(entry, dest.unwrap());
-                    entry = dest.unwrap();
-                }
-            }
-
-            let mut enemies = get_enemy_neighbors(entry, &map);
-            if !enemies.is_empty() {
-                enemies.sort_by(|a, b| a.hp.cmp(&b.hp).then(b.location.cmp(&a.location)));
-                let target = enemies.first().unwrap();
-                map.attack(entry, target.location);
-            }
-        }
-
+    while !simulate_round(map) {
         // map._print();
         round += 1;
     }
 
-    round -= 1;
+    round
+}
 
-    let hp_sum: usize = itertools::chain(&map.elves, &map.goblins)
-        .filter(|u| u.alive)
-        .map(|u| u.hp)
-        .sum();
+fn simulate_elf_victory(strength: usize, map: &mut Map) -> (bool, usize) {
+    map.elves.iter_mut().for_each(|u| u.strength = strength);
 
-    println!(
-        "Combat finished after {} rounds, hp sum = {}, outcome = {}",
-        round,
-        hp_sum,
-        round * hp_sum
-    );
+    let mut victory = true;
+    let mut ended = false;
+    let mut round = 0;
 
-    println!("Running Day 15 - b");
+    while victory && !ended {
+        ended = simulate_round(map);
+        victory = map.elves.iter().filter(|u| !u.alive).count() == 0;
+        round += 1;
+    }
+
+    (victory, round - 1)
+}
+
+fn simulate_round(map: &mut Map) -> bool {
+    let mut queue = build_queue(&map);
+
+    while let Some(mut entry) = queue.pop() {
+        if map[entry].is_open() {
+            continue;
+        }
+
+        let targets = find_targets(entry, &map);
+
+        if targets.is_empty() {
+            return true;
+        }
+
+        if !target_adjacent(entry, &map, &targets) {
+            let target_points = find_target_points(targets, &map);
+            if target_points.is_empty() {
+                continue;
+            }
+
+            let dest = find_destination(entry, &target_points, &map);
+            if dest.is_some() {
+                map.swap(entry, dest.unwrap());
+                entry = dest.unwrap();
+            }
+        }
+
+        let mut enemies = get_enemy_neighbors(entry, &map);
+        if !enemies.is_empty() {
+            enemies.sort_by(|a, b| a.hp.cmp(&b.hp).then(b.location.cmp(&a.location)));
+            let target = enemies.first().unwrap();
+            map.attack(entry, target.location);
+        }
+    }
+
+    false
 }
 
 // Build a queue of points relating to all remaining units, in read order.
@@ -292,6 +333,7 @@ impl PartialOrd for Point {
 
 type Tiles = Vec<Vec<Tile>>;
 
+#[derive(Clone)]
 struct Map {
     tiles: Tiles,
     goblins: Vec<Unit>,
@@ -360,15 +402,21 @@ impl Map {
         }
     }
 
-    fn attack(&mut self, _: Point, b: Point) {
+    fn attack(&mut self, a: Point, b: Point) {
+        let unit_a_strength = match self[a] {
+            Tile::Goblin(id) => self.goblins[id].strength,
+            Tile::Elf(id) => self.elves[id].strength,
+            _ => panic!(),
+        };
+
         let unit_b = match self[b] {
             Tile::Goblin(id) => &mut self.goblins[id],
             Tile::Elf(id) => &mut self.elves[id],
             _ => panic!(),
         };
 
-        if unit_b.hp > 3 {
-            unit_b.hp -= 3;
+        if unit_b.hp > unit_a_strength {
+            unit_b.hp -= unit_a_strength;
         } else {
             unit_b.hp = 0;
             unit_b.alive = false;
@@ -400,8 +448,10 @@ impl std::ops::Index<(usize, usize)> for Map {
     }
 }
 
+#[derive(Clone)]
 struct Unit {
     location: Point,
+    strength: usize,
     hp: usize,
     alive: bool,
 }
@@ -410,6 +460,7 @@ impl Unit {
     fn new(location: Point) -> Self {
         Unit {
             location: location,
+            strength: 3,
             hp: 200,
             alive: true,
         }
