@@ -1,7 +1,7 @@
 use itertools::Itertools;
-use pathfinding::utils::absdiff;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::collections::VecDeque;
 
 pub fn day15(lines: &mut Vec<String>) {
     println!("Running Day 15 - a");
@@ -44,18 +44,20 @@ fn calc_outcome(map: &Map, rounds: usize) -> usize {
             .sum::<usize>()
 }
 
+// Simulates a full combat.
+// Modifies map in place.
+// Returns the number of completed rounds.
 fn simulate_combat(map: &mut Map) -> usize {
-    // map._print();
-
     let mut round = 0;
     while !simulate_round(map) {
-        // map._print();
         round += 1;
     }
-
     round
 }
 
+// Simulates combat until a single elf dies, or the elves win.
+// Modifies map in place.
+// Returns (were elves victorious, the number of completed rounds).
 fn simulate_elf_victory(strength: usize, map: &mut Map) -> (bool, usize) {
     map.elves.iter_mut().for_each(|u| u.strength = strength);
 
@@ -72,6 +74,8 @@ fn simulate_elf_victory(strength: usize, map: &mut Map) -> (bool, usize) {
     (victory, round - 1)
 }
 
+// Simulates a round of combat, ending early when no enemies are found for a unit.
+// Returns whether combat has ended entirely.
 fn simulate_round(map: &mut Map) -> bool {
     let mut queue = build_queue(&map);
 
@@ -122,9 +126,9 @@ fn build_queue(map: &Map) -> BinaryHeap<Point> {
     queue
 }
 
-// Find all remaining target units of the opposite type as the one located at start.
-fn find_targets(start: Point, map: &Map) -> Vec<&Unit> {
-    (match map[start] {
+// Find all remaining target units of the opposite type as the one located at Point p.
+fn find_targets(p: Point, map: &Map) -> Vec<&Unit> {
+    (match map[p] {
         Tile::Goblin(_) => &map.elves,
         Tile::Elf(_) => &map.goblins,
         _ => panic!(),
@@ -134,21 +138,23 @@ fn find_targets(start: Point, map: &Map) -> Vec<&Unit> {
     .collect()
 }
 
-fn target_adjacent(entry: Point, map: &Map, targets: &Vec<&Unit>) -> bool {
+// Determine if a target unit is adjacent to Point p.
+fn target_adjacent(p: Point, map: &Map, targets: &Vec<&Unit>) -> bool {
     let target_locations: Vec<Point> = targets.iter().map(|t| t.location).collect();
-    get_neighbors(entry, &map)
+    get_neighbors(p, &map)
         .iter()
         .find(|p| target_locations.contains(&p))
         .is_some()
 }
 
 // Find all open points adjacent to a target.
-// Result is a BinaryHeap of unique Points sorted in read order.
-fn find_target_points(targets: Vec<&Unit>, map: &Map) -> BinaryHeap<Point> {
+// Result is a Vec of unique Points sorted in read order.
+fn find_target_points(targets: Vec<&Unit>, map: &Map) -> Vec<Point> {
     targets
         .iter()
         .flat_map(|t| get_open_neighbors(t.location, &map))
         .unique()
+        .sorted_by(|a, b| b.cmp(&a))
         .collect()
 }
 
@@ -189,7 +195,11 @@ fn _find_destination_astar(
     }
 }
 
-fn find_destination(start: Point, target_points: &BinaryHeap<Point>, map: &Map) -> Option<Point> {
+fn _find_destination_bfs(
+    start: Point,
+    target_points: &BinaryHeap<Point>,
+    map: &Map,
+) -> Option<Point> {
     use pathfinding::directed::bfs;
 
     let bfs_results = target_points
@@ -229,6 +239,59 @@ fn find_destination(start: Point, target_points: &BinaryHeap<Point>, map: &Map) 
     )
 }
 
+fn find_destination(start: Point, target_points: &Vec<Point>, map: &Map) -> Option<Point> {
+    // Queue stores (node, bfs) tuples.
+    let mut queue: VecDeque<(Point, usize)> = VecDeque::new();
+
+    // Each entry in BFS_Map contains (prev, bfs) tuple.
+    let mut bfs_map: Vec<Vec<Option<(Point, usize)>>> = vec![vec![None; map.height()]; map.width()];
+
+    // Prime the pump
+    queue.push_back((start, 0));
+    bfs_map[start.0][start.1] = Some((start, 0));
+    let mut target_bfs = None;
+
+    while let Some((node, bfs)) = queue.pop_front() {
+        // Check if we found the closest target point (in read order).
+        if target_points.contains(&node) {
+            target_bfs = Some(bfs);
+            break;
+        }
+
+        // Visit all neighbors to node, and queue their visits (in read order).
+        let neighbors = get_open_neighbors(node, &map);
+        for neighbor in neighbors {
+            if bfs_map[neighbor.0][neighbor.1].is_none() {
+                queue.push_back((neighbor, bfs + 1));
+                bfs_map[neighbor.0][neighbor.1] = Some((node, bfs + 1));
+            }
+        }
+    }
+    if target_bfs.is_none() {
+        return None;
+    }
+    let target_bfs = target_bfs.unwrap();
+
+    // Find the first target we reached in target_bfs, in reading order.
+    let tp = *target_points
+        .iter()
+        .filter(|p| bfs_map[p.0][p.1].is_some())
+        .filter(|p| bfs_map[p.0][p.1].unwrap().1 == target_bfs)
+        .next()
+        .unwrap();
+
+    let mut node = tp;
+    let mut prev = bfs_map[tp.0][tp.1].unwrap().0;
+
+    // Walk the same path we took to get here, backward.
+    while prev != start {
+        node = prev;
+        prev = bfs_map[node.0][node.1].unwrap().0;
+    }
+    Some(node)
+}
+
+// Get neighboring points to p, within map's bounds (in read order).
 fn get_neighbors(p: Point, map: &Map) -> Vec<Point> {
     let mut points = Vec::new();
     if p.1 > 0 {
@@ -246,6 +309,7 @@ fn get_neighbors(p: Point, map: &Map) -> Vec<Point> {
     points
 }
 
+// Gets open neighboring points to p, within map's bounds (in read order).
 fn get_open_neighbors(p: Point, map: &Map) -> Vec<Point> {
     get_neighbors(p, &map)
         .into_iter()
@@ -253,6 +317,7 @@ fn get_open_neighbors(p: Point, map: &Map) -> Vec<Point> {
         .collect()
 }
 
+// Gets enemy neighbors to p (in read order).
 fn get_enemy_neighbors(p: Point, map: &Map) -> Vec<&Unit> {
     let neighbors = get_neighbors(p, &map);
 
@@ -269,6 +334,7 @@ fn get_enemy_neighbors(p: Point, map: &Map) -> Vec<&Unit> {
 }
 
 fn _calc_manhattan(a: &Point, b: &Point) -> usize {
+    use pathfinding::utils::absdiff;
     absdiff(a.0, b.0) + absdiff(a.1, b.1)
 }
 
