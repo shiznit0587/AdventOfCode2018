@@ -252,7 +252,8 @@ fn find_destination(start: Point, target_points: &Vec<Point>, map: &Map) -> Opti
     let mut target_bfs = None;
 
     while let Some((node, bfs)) = queue.pop_front() {
-        // Check if we found a closest target point (in read order).
+        // Check if we're now processing a closest target point
+        // (meaning all closest target points have already been visited).
         if target_points.contains(&node) {
             target_bfs = Some(bfs);
             break;
@@ -262,8 +263,8 @@ fn find_destination(start: Point, target_points: &Vec<Point>, map: &Map) -> Opti
         let neighbors = get_open_neighbors(node, &map);
         for neighbor in neighbors {
             if bfs_map[neighbor.0][neighbor.1].is_none() {
-                queue.push_back((neighbor, bfs + 1));
                 bfs_map[neighbor.0][neighbor.1] = Some((node, bfs + 1));
+                queue.push_back((neighbor, bfs + 1));
             }
         }
     }
@@ -283,7 +284,7 @@ fn find_destination(start: Point, target_points: &Vec<Point>, map: &Map) -> Opti
     let mut node = tp;
     let mut prev = bfs_map[tp.0][tp.1].unwrap().0;
 
-    // Walk the same path we took to get here, backward.
+    // Walk the same path we took to get there, backward.
     while prev != start {
         node = prev;
         prev = bfs_map[node.0][node.1].unwrap().0;
