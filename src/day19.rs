@@ -45,7 +45,7 @@ impl Emulator {
         }
         // The program is iterating all pairs of numbers less than or equal to a value stored
         // in register 4, using registers 3 and 5. For each pair whose product is the target,
-        // it adds the value from register 3 to register 0.
+        // it adds the value from register 5 to register 0.
         // In essence, it's summing the divisors.
         let mut sum = 0;
         for i in 1..self.registers[4] + 1 {
