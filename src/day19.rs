@@ -14,14 +14,13 @@ pub fn day19(lines: &mut Vec<String>) {
 
     emulator = Emulator::new();
     emulator.registers[0] = 1;
-    // emulator.run_program(&program);
+    emulator.run_program_b(&program);
 
     println!("Value of Register 0 = {}", emulator.registers[0]);
 }
 
 struct Emulator {
     ip: usize,
-    ticks: usize,
     registers: Registers,
 }
 
@@ -29,21 +28,35 @@ impl Emulator {
     fn new() -> Self {
         Emulator {
             ip: 0,
-            ticks: 0,
             registers: [0; 6],
         }
     }
 
     fn run_program(&mut self, program: &Program) {
-        while
-        /*0 <= self.ip &&*/
-        self.ip < program.instructions.len() {
+        while self.ip < program.instructions.len() {
             self.run_instruction(program);
         }
     }
 
+    fn run_program_b(&mut self, program: &Program) {
+        // Stop executing instructions once we enter the core calculation loop.
+        while self.ip != 1 {
+            self.run_instruction(program);
+        }
+        // The program is iterating all pairs of numbers less than or equal to a value stored
+        // in register 4, using registers 3 and 5. For each pair whose product is the target,
+        // it adds the value from register 3 to register 0.
+        // In essence, it's summing the divisors.
+        let mut sum = 0;
+        for i in 1..self.registers[4] + 1 {
+            if self.registers[4] % i == 0 {
+                sum += i;
+            }
+        }
+        self.registers[0] = sum;
+    }
+
     fn run_instruction(&mut self, program: &Program) {
-        self.ticks += 1;
         self.registers[program.ip_register] = self.ip;
         let i = &program.instructions[self.ip];
         i.op.op(&mut self.registers, i);
@@ -91,8 +104,13 @@ struct Instruction {
     c: usize,
 }
 
+impl std::fmt::Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} {} {} {}", self.op, self.a, self.b, self.c)
+    }
+}
+
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, PartialEq)]
 enum Op {
     addr,
     addi,
@@ -135,98 +153,87 @@ impl Op {
         }
     }
 
-    pub fn op(&self, r: &mut Registers, i: &Instruction) {
-        let op_fn = match self {
-            Op::addr => Op::fn_addr,
-            Op::addi => Op::fn_addi,
-            Op::mulr => Op::fn_mulr,
-            Op::muli => Op::fn_muli,
-            Op::banr => Op::fn_banr,
-            Op::bani => Op::fn_bani,
-            Op::borr => Op::fn_borr,
-            Op::bori => Op::fn_bori,
-            Op::setr => Op::fn_setr,
-            Op::seti => Op::fn_seti,
-            Op::gtir => Op::fn_gtir,
-            Op::gtri => Op::fn_gtri,
-            Op::gtrr => Op::fn_gtrr,
-            Op::eqir => Op::fn_eqir,
-            Op::eqri => Op::fn_eqri,
-            Op::eqrr => Op::fn_eqrr,
-        };
-        op_fn(r, i);
+    fn to_string(&self) -> &str {
+        match self {
+            Op::addr => "addr",
+            Op::addi => "addi",
+            Op::mulr => "mulr",
+            Op::muli => "muli",
+            Op::banr => "banr",
+            Op::bani => "bani",
+            Op::borr => "borr",
+            Op::bori => "bori",
+            Op::setr => "setr",
+            Op::seti => "seti",
+            Op::gtir => "gtir",
+            Op::gtri => "gtri",
+            Op::gtrr => "gtrr",
+            Op::eqir => "eqir",
+            Op::eqri => "eqri",
+            Op::eqrr => "eqrr",
+        }
     }
 
-    fn fn_addr(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] + r[i.b];
+    pub fn op(&self, r: &mut Registers, i: &Instruction) {
+        r[i.c] = match self {
+            Op::addr => r[i.a] + r[i.b],
+            Op::addi => r[i.a] + i.b,
+            Op::mulr => r[i.a] * r[i.b],
+            Op::muli => r[i.a] * i.b,
+            Op::banr => r[i.a] & r[i.b],
+            Op::bani => r[i.a] & i.b,
+            Op::borr => r[i.a] | r[i.b],
+            Op::bori => r[i.a] | i.b,
+            Op::setr => r[i.a],
+            Op::seti => i.a,
+            Op::gtir => {
+                if i.a > r[i.b] {
+                    1
+                } else {
+                    0
+                }
+            }
+            Op::gtri => {
+                if r[i.a] > i.b {
+                    1
+                } else {
+                    0
+                }
+            }
+            Op::gtrr => {
+                if r[i.a] > r[i.b] {
+                    1
+                } else {
+                    0
+                }
+            }
+            Op::eqir => {
+                if i.a == r[i.b] {
+                    1
+                } else {
+                    0
+                }
+            }
+            Op::eqri => {
+                if r[i.a] == r[i.b] {
+                    1
+                } else {
+                    0
+                }
+            }
+            Op::eqrr => {
+                if r[i.a] == r[i.b] {
+                    1
+                } else {
+                    0
+                }
+            }
+        };
     }
-    fn fn_addi(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] + i.b;
-    }
-    fn fn_mulr(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] * r[i.b];
-    }
-    fn fn_muli(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] * i.b;
-    }
-    fn fn_banr(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] & r[i.b];
-    }
-    fn fn_bani(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] & i.b;
-    }
-    fn fn_borr(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] | r[i.b];
-    }
-    fn fn_bori(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a] | i.b;
-    }
-    fn fn_setr(r: &mut Registers, i: &Instruction) {
-        r[i.c] = r[i.a];
-    }
-    fn fn_seti(r: &mut Registers, i: &Instruction) {
-        r[i.c] = i.a;
-    }
-    fn fn_gtir(r: &mut Registers, i: &Instruction) {
-        if i.a > r[i.b] {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
-    }
-    fn fn_gtri(r: &mut Registers, i: &Instruction) {
-        if r[i.a] > i.b {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
-    }
-    fn fn_gtrr(r: &mut Registers, i: &Instruction) {
-        if r[i.a] > r[i.b] {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
-    }
-    fn fn_eqir(r: &mut Registers, i: &Instruction) {
-        if i.a == r[i.b] {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
-    }
-    fn fn_eqri(r: &mut Registers, i: &Instruction) {
-        if r[i.a] == i.b {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
-    }
-    fn fn_eqrr(r: &mut Registers, i: &Instruction) {
-        if r[i.a] == r[i.b] {
-            r[i.c] = 1;
-        } else {
-            r[i.c] = 0;
-        }
+}
+
+impl std::fmt::Display for Op {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
