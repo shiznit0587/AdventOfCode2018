@@ -1,3 +1,4 @@
+use crate::emulator::{Emulator, Instruction, InstructionData, Op, Program, Registers};
 use crate::utils;
 use itertools::Itertools;
 use regex::Regex;
@@ -25,7 +26,7 @@ pub fn day16(lines: &mut Vec<String>) {
     let mut iter = input1.iter().take(split + 1);
     while let Some((before, instruction, after, _)) = iter.next_tuple::<(_, _, _, _)>() {
         let before = parse_registers(before, &rex);
-        let instruction = parse_instruction(&instruction);
+        let instruction = parse_raw_instruction(&instruction);
         let after = parse_registers(after, &rex);
 
         let behaving_ops = test_ops(&before, &instruction, &after);
@@ -43,38 +44,66 @@ pub fn day16(lines: &mut Vec<String>) {
 
     let op_codes = deduce_op_codes(&mut samples);
 
-    let mut r = [0, 0, 0, 0];
-    for instruction in input2 {
-        let i = parse_instruction(instruction);
-        op_codes[&i[0]].get_fn()(&mut r, &i);
-    }
+    let mut emulator = Emulator::new();
+    let program = Program {
+        ip_register: 4,
+        instructions: input2
+            .iter()
+            .map(|i| parse_instruction(i, &op_codes))
+            .collect(),
+    };
+    emulator.run_program(&program);
 
-    println!("Program Results = {:?}", r);
+    println!("Program Results = {:?}", emulator.registers);
 }
 
-fn parse_registers(registers: &String, rex: &Regex) -> [usize; 4] {
+fn parse_registers(registers: &String, rex: &Regex) -> Registers {
     let c = rex.captures(registers).unwrap();
     [
         utils::parse::<usize>(&c[1]),
         utils::parse::<usize>(&c[2]),
         utils::parse::<usize>(&c[3]),
         utils::parse::<usize>(&c[4]),
+        0,
+        0,
     ]
 }
 
-fn parse_instruction(instructions: &String) -> [usize; 4] {
-    let i = instructions
+fn parse_raw_instruction(instruction: &String) -> [usize; 4] {
+    let i = instruction
         .split(' ')
         .map(|n| utils::parse::<usize>(&n))
         .collect_vec();
     [i[0], i[1], i[2], i[3]]
 }
 
-fn test_ops(before: &Registers, instruction: &Instruction, after: &Registers) -> Vec<Op> {
+fn parse_instruction(instruction: &String, op_codes: &HashMap<usize, Op>) -> Instruction {
+    let i = instruction
+        .split(' ')
+        .map(|n| utils::parse::<usize>(&n))
+        .collect_vec();
+    Instruction {
+        op: op_codes[&i[0]],
+        data: InstructionData {
+            a: i[1],
+            b: i[2],
+            c: i[3],
+        },
+    }
+}
+
+fn test_ops(before: &Registers, instruction: &[usize; 4], after: &Registers) -> Vec<Op> {
     Op::iter()
         .map(|op| (op, before.clone()))
         .map(|(op, mut r)| {
-            op.get_fn()(&mut r, &instruction);
+            op.op(
+                &mut r,
+                &InstructionData {
+                    a: instruction[1],
+                    b: instruction[2],
+                    c: instruction[3],
+                },
+            );
             (op, r)
         })
         .filter(|(_, r)| r == after)
@@ -116,146 +145,4 @@ fn deduce_op_codes(samples: &mut Vec<(usize, Vec<Op>)>) -> HashMap<usize, Op> {
     }
 
     op_codes
-}
-
-fn addr(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] + r[i[2]];
-}
-fn addi(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] + i[2];
-}
-fn mulr(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] * r[i[2]];
-}
-fn muli(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] * i[2];
-}
-fn banr(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] & r[i[2]];
-}
-fn bani(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] & i[2];
-}
-fn borr(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] | r[i[2]];
-}
-fn bori(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]] | i[2];
-}
-fn setr(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = r[i[1]];
-}
-fn seti(r: &mut Registers, i: &Instruction) {
-    r[i[3]] = i[1];
-}
-fn gtir(r: &mut Registers, i: &Instruction) {
-    if i[1] > r[i[2]] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-fn gtri(r: &mut Registers, i: &Instruction) {
-    if r[i[1]] > i[2] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-fn gtrr(r: &mut Registers, i: &Instruction) {
-    if r[i[1]] > r[i[2]] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-fn eqir(r: &mut Registers, i: &Instruction) {
-    if i[1] == r[i[2]] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-fn eqri(r: &mut Registers, i: &Instruction) {
-    if r[i[1]] == i[2] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-fn eqrr(r: &mut Registers, i: &Instruction) {
-    if r[i[1]] == r[i[2]] {
-        r[i[3]] = 1;
-    } else {
-        r[i[3]] = 0;
-    }
-}
-
-type Registers = [usize; 4];
-type Instruction = Registers;
-
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum Op {
-    addr,
-    addi,
-    mulr,
-    muli,
-    banr,
-    bani,
-    borr,
-    bori,
-    setr,
-    seti,
-    gtir,
-    gtri,
-    gtrr,
-    eqir,
-    eqri,
-    eqrr,
-}
-
-impl Op {
-    pub fn iter() -> std::slice::Iter<'static, Op> {
-        static OPS: [Op; 16] = [
-            Op::addr,
-            Op::addi,
-            Op::mulr,
-            Op::muli,
-            Op::banr,
-            Op::bani,
-            Op::borr,
-            Op::bori,
-            Op::setr,
-            Op::seti,
-            Op::gtir,
-            Op::gtri,
-            Op::gtrr,
-            Op::eqir,
-            Op::eqri,
-            Op::eqrr,
-        ];
-        OPS.into_iter()
-    }
-
-    fn get_fn(&self) -> fn(&mut Registers, &Instruction) {
-        match self {
-            Op::addr => addr,
-            Op::addi => addi,
-            Op::mulr => mulr,
-            Op::muli => muli,
-            Op::banr => banr,
-            Op::bani => bani,
-            Op::borr => borr,
-            Op::bori => bori,
-            Op::setr => setr,
-            Op::seti => seti,
-            Op::gtir => gtir,
-            Op::gtri => gtri,
-            Op::gtrr => gtrr,
-            Op::eqir => eqir,
-            Op::eqri => eqri,
-            Op::eqrr => eqrr,
-        }
-    }
 }

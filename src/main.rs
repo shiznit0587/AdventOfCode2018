@@ -33,6 +33,7 @@ mod day7;
 mod day8;
 mod day9;
 
+pub mod emulator;
 pub mod utils;
 
 fn main() -> std::io::Result<()> {
